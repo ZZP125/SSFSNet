@@ -263,11 +263,10 @@ class SpatialFeatureEnhancement(nn.Module):
 
     def forward(self, x):
         x1=self.norm1(x)
-        x1 = self.conv1(x1)
-        x1 = self.norm2(x1)
         x1 = self.activation(x1)
+        x1 = self.conv1(x1)
 
-        x = x   + self.drop_path(x1)
+        x = x   + self.drop_path(self.norm1(x1))
         x = x + self.drop_path(self.mlp2(self.norm2(x)))
 
         x = self.norm2(x)
@@ -286,4 +285,5 @@ if __name__ == '__main__':
     output = block(input)
     print(input.size())
     print(output.size())
+
 
