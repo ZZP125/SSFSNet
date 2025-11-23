@@ -12,10 +12,39 @@ from SFE_M import SpatialFeatureEnhancement
 
 
 
+class Transformer(nn.Module):
+    def __init__(self, dim, depth, heads, mlp_dim, drop, drop_path, activation):
+        super().__init__()
+
+        self.norm = nn.LayerNorm(dim)
+        layers = []
+        for i in range(depth):
+            layers.append(
+
+                SCSFormer(
+                    dim=dim,
+                    num_heads=heads, mlp_ratio=mlp_dim,
+                    drop=drop, drop_path=drop_path,
+                    act_layer=activation,  # ,#,nn.ReLU,,,mishnn.GELU
+                    layerscale=False, )
+
+
+            )
+        self.net = nn.Sequential(*layers)
+
+
+    def forward(self, x, mask=None):
+        # x = rearrange(x, 'b c h w -> b (h w) c')
+
+        att1 = self.net(x)
+
+
+        return att1
+
 
 class SSFSNet(nn.Module):
     def __init__(self, in_channels=1, num_classes=16, Conv=False, dim=32, depth=1, heads=8, size=11,
-                 mlp_dim=1/8, attn_drop=0.1, drop=0.2, drop_path=0.1, dataset_name='pu'):
+                 mlp_dim=1/8, drop=0.2, drop_path=0.1, dataset_name='pu'):
         super(SSFSNet, self).__init__()
         # self.L = num_tokens
         self.activation = mish()  ## # gelu()gelu_new()nn.GELU()nn.Sigmoid()nn.ReLU()
@@ -88,12 +117,9 @@ class SSFSNet(nn.Module):
         self.agca = AGCA(conv_dim, conv_dim, 8, activation=self.activation)
         #
         # self.eca = ECAAttention(dim1)
-        self.transformer = SCSFormer(
-                    dim=dim,
-                    num_heads=heads, mlp_ratio=mlp_dim,
-                    drop=drop,  drop_path=drop_path,
-                    act_layer=self.activation,  # ,#,nn.ReLU,,,mishnn.GELU
-                    layerscale=False, )
+        self.transformer = Transformer(dim, depth, heads, mlp_dim, drop, drop_path,
+                                       self.activation)
+
 
 
         self.nn1 = nn.Linear(dim, num_classes)
